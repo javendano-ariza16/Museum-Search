@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import	{useRouter} from 'next/router';
-import { Col, Row, Pagination } from 'react-bootstrap';
+import { Col, Row, Pagination, Card, Button } from 'react-bootstrap';
 import ArtworkCards from '@/components/ArtworkCard';
 import Error from 'next/error';
+import validObjectIDList from '@/public/data/validObjectIDList.json'
+import Link from 'next/link';
 
 const PER_PAGE=12;
 
@@ -18,10 +20,12 @@ export default function ArtworkPage () {
     useEffect(() => {
         if (data) {
            let results = []
-            for (let i = 0; i < data?.objectIDs?.length; i += PER_PAGE) {
-                const chunk = data?.objectIDs.slice(i, i + PER_PAGE);
-                results.push(chunk);
-              }         
+           let filteredResults = validObjectIDList.objectIDs.filter(x => data.objectIDs?.includes(x));
+           for (let i = 0; i < filteredResults.length; i += PER_PAGE) {
+            const chunk = filteredResults.slice(i, i + PER_PAGE);
+            results.push(chunk);
+          }
+                 
             setArtworkList(results);
             setPage(1)
         }
@@ -40,14 +44,12 @@ export default function ArtworkPage () {
         if(page < artworkList.length)
         setPage(page + 1)
       }
-      if(artworkList)
+      if(artworkList.length>0)
       return<>
         <Row className="gy-4">
             {artworkList.length > 0 && artworkList[page-1].map((currentObjectID)=>
             <Col lg={3} key={currentObjectID}><ArtworkCards objectID={currentObjectID} /></Col>
             )}
-            {artworkList.length == 0 && <h4>Nothing Here</h4>}
-            {/* We have to improve this part */}
         </Row>
           {artworkList.length > 0 &&
            <Row>
@@ -58,7 +60,20 @@ export default function ArtworkPage () {
                       <Pagination.Next onClick={nextPage} />
                   </Pagination>
               </Col>
-            </Row>}
+            </Row>
+            }
     </>
-      //TO DO: Improve this part     
+    else{
+      return (
+        <Card className="card text-white bg-primary mb-3">
+          <Card.Body>
+            <Card.Title>Nothing Here </Card.Title>
+            <Card.Text>
+            Try searching for something else.
+            </Card.Text>
+            <Link href="/search" passHref><Button variant="secondary">Go Search</Button></Link>
+          </Card.Body>
+        </Card>
+      )
+    }   
   };

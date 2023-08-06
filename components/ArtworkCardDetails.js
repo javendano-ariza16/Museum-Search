@@ -1,9 +1,37 @@
 import useSWR from 'swr';
 import Error from 'next/error';
-import { Card } from 'react-bootstrap';
+import { Card,Button } from 'react-bootstrap';
+import { useAtom } from 'jotai';
+import { favouritesAtom } from '@/store';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import { addToFavourites, removeFromFavourites } from '@/lib/userData';
+
+
 export default function ArtworkCardsDetail(props){
+
+    const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
+
+    const [showAdded, setShowAdded] = useState(false)
+
+    useEffect(()=>{
+      setShowAdded(favouritesList?.includes(props.objectID))
+  }, [favouritesList])
+  
+
+    async function favouritesClicked () {
+      if(showAdded) {
+        setFavouritesList(await removeFromFavourites(props.objectID)) ;
+        console.log(props)
+        setShowAdded(false) 
+      }else{
+        setFavouritesList(await addToFavourites(props.objectID));
+        setShowAdded(true)
+      }
+    }
+
     const { data, error } = useSWR(
-        `https://collectionapi.metmuseum.org/public/collection/v1/objects/${props?.objectID}`
+      props.objectID?`https://collectionapi.metmuseum.org/public/collection/v1/objects/${props.objectID}`:null
       );
     if(error){
         console.log('The issue is in the ArtworkCards')
@@ -31,6 +59,7 @@ export default function ArtworkCardsDetail(props){
           <Card.Body>
             <Card.Title>{title || 'N/A'}</Card.Title>
             <Card.Text>
+              <p>
               <strong>Date:</strong> {objectDate || 'N/A'}
               <br />
               <strong>Classification:</strong> {classification || 'N/A'}
@@ -48,6 +77,10 @@ export default function ArtworkCardsDetail(props){
               <strong>Credit Line:</strong> {creditLine || 'N/A'}
               <br />
               <strong>Dimensions:</strong> {dimensions || 'N/A'}
+              <br/>
+              <br/>
+              <Button variant={showAdded?"primary":"outline-primary"} onClick={favouritesClicked}> {showAdded?"+ Favourite (added)" : "+ Favourite" }</Button>
+              </p>
             </Card.Text>
           </Card.Body>
         </Card>
